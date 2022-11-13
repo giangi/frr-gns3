@@ -1,0 +1,134 @@
+#!/bin/sh
+
+# Provision FRR Debian image
+# Some inspiration was taken from
+# https://www.uni-koeln.de/~pbogusze/posts/Building_64bit_alpine_linux_GNS3_FRRouting_appliance.html
+
+set -ex
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Modify GRUB to
+# - Setup serial console
+# - Use legacy network interface names (eth<N>)
+# - Noisy boot
+sed -i -e 's/^#\?\(GRUB_TERMINAL\)=.*/\1=console/' /etc/default/grub
+sed -i -e 's/^#\?\(GRUB_CMDLINE_LINUX\)=.*/\1="console=ttyS0,115200 console=tty0 net.ifnames=0 biosdevname=0"/' /etc/default/grub
+sed -i -e 's/^#\?\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1=""/' /etc/default/grub
+
+update-grub2
+
+# Set the serial console for root autologin
+mkdir -p /etc/systemd/system/serial-getty@ttyS0.service.d
+cat <<'EOF' | tee /etc/systemd/system/serial-getty@ttyS0.service.d/autologin.conf
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --keep-baud 115200,57600,38400,9600 --autologin root %I $TERM
+EOF
+systemctl daemon-reload
+
+# Prepare /etc/hosts. We only need local hosts
+cat <<'EOF' | tee /etc/hosts 1>&2
+127.0.0.1	localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
+# Replace the interfaces file. We want 8 interfaces.
+cat <<'EOF' | tee /etc/network/interfaces 1>&2
+auto lo
+iface lo inet loopback
+
+auto eth0
+auto eth1
+auto eth2
+auto eth3
+auto eth4
+auto eth5
+auto eth6
+auto eth7
+EOF
+
+# Enable IP and IPv6 forwarding
+cat <<'EOF' | tee /etc/sysctl.d/99-ip-forwarding.conf 1>&2
+net.ipv4.ip_forward=1
+net.ipv4.conf.all.forwarding=1
+net.ipv6.conf.all.forwarding=1
+EOF
+
+# MPLS modules and configuration
+cat <<'EOF' | tee /etc/modules-load.d/mpls.conf 1>&2
+mpls_router
+mpls_iptunnel
+EOF
+
+cat <<'EOF' | tee /etc/sysctl.d/99-mpls.conf 1>&2
+net.mpls.conf.lo.input=1
+net.mpls.conf.eth0.input=1
+net.mpls.conf.eth1.input=1
+net.mpls.conf.eth2.input=1
+net.mpls.conf.eth3.input=1
+net.mpls.conf.eth4.input=1
+net.mpls.conf.eth5.input=1
+net.mpls.conf.eth6.input=1
+net.mpls.conf.eth7.input=1
+net.mpls.platform_labels=1048575
+EOF
+
+# Install some prerequisite packages:
+# - ifupdown2: for VRRP support
+# - curl: for downloading during provisioning
+# - gnupg: key management
+# - mtr: arguably superior traceroutes
+apt-get -y update
+apt-get -y install ifupdown2 curl gnupg mtr-tiny
+
+# Setup FRR official Debian repository
+# See https://deb.frrouting.org/
+# Apply Debian guidelines from
+#   https://wiki.debian.org/DebianRepository/UseThirdParty
+. /etc/os-release
+test -n "${VERSION_CODENAME}"
+FRRVER=frr-stable
+mkdir -p /etc/apt/keyrings
+curl https://deb.frrouting.org/frr/keys.asc -o /etc/apt/keyrings/frr.asc
+gpg --batch --yes -o /etc/apt/keyrings/frr.gpg --dearmor /etc/apt/keyrings/frr.asc
+cat <<EOF | tee /etc/apt/sources.list.d/frr.list 1>&2
+deb [signed-by=/etc/apt/keyrings/frr.gpg] https://deb.frrouting.org/frr ${VERSION_CODENAME} ${FRRVER}
+EOF
+
+# Install FRR
+apt-get -y update
+apt-get -y install frr frr-pythontools
+
+# Configure all daemons to run by default
+sed -i -E -e 's/^(bgp|ospf|ospf6|rip|ripng|isis|pim|ldp|nhrp|eigrp|babel|sharp|pbr|bfd|fabric|vrrp|path)d=.*/\1d=yes/' /etc/frr/daemons
+
+# Save the installed FRR package version
+FRR_DEB_VERSION="$(dpkg-query -W -f '${Version}' frr)"
+test -n "${FRR_DEB_VERSION}"
+echo "${FRR_DEB_VERSION}" > /etc/frr-version
+
+# Final cosmetic touches
+# Replace the static MOTD
+cat <<EOF | tee /etc/motd
+
+FRR Debian Cloud GNS3 Appliance
+${PRETTY_NAME}
+FRR Version: ${FRR_DEB_VERSION}
+
+Run "vtysh" to access FRR's VTY shell
+EOF
+
+# Cleanup. Also remove packages that were useful only as a part of the
+# provisioning to save on space.
+apt-get -y purge curl gnupg
+apt-get -y autoremove
+dpkg -l | awk '/^rc/{print $2}' | xargs -r -t apt-get -y purge
+apt-get -y clean
+rm -rf /var/lib/apt/lists/*
+# If we are running on virtio-scsi the following will allow to reclaim space
+fstrim -v -A

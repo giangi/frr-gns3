@@ -1,0 +1,5 @@
+output-qemu
+*.gns3a
+*.qcow2
+*.convert
+frr-version

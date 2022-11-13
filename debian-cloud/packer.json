@@ -1,0 +1,40 @@
+{
+    "description": "FRRouting image based on Debian cloud image",
+    "variables": {
+        "base_image_name": "base.qcow2",
+        "image_name": "image.qcow2",
+        "root_password": "gns3"
+    },
+    "builders": [
+        {
+            "type": "qemu",
+            "accelerator": "kvm",
+            "disk_interface": "virtio-scsi",
+            "disk_size": "2048M",
+            "disk_compression": true,
+            "format": "qcow2",
+            "headless": true,
+            "net_device": "virtio-net-pci",
+            "vm_name": "{{user `image_name`}}",
+            "disk_image": true,
+            "iso_url": "{{user `base_image_name`}}",
+            "iso_checksum": "none",
+            "communicator": "ssh",
+            "ssh_username": "root",
+            "ssh_password": "{{user `root_password`}}",
+            "shutdown_command": "shutdown -h now"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/provision.sh"
+        },
+        {
+            "type": "file",
+            "direction": "download",
+            "source": "/etc/frr-version",
+            "destination": "frr-version"
+        }
+    ]
+}

@@ -1,0 +1,43 @@
+{
+    "appliance_id": "4ca2b390-6dd8-4f00-8286-f12e99dc81db",
+    "name": "FRRouting Debian Standard",
+    "category": "router",
+    "description": "FRRouting Debian Standard",
+    "vendor_name": "FRRouting Project",
+    "vendor_url": "https://frrouting.org",
+    "product_name": "FRR",
+    "availability": "free",
+    "registry_version": 6,
+    "status": "experimental",
+    "maintainer": "Gianluca Merlo",
+    "maintainer_email": "root@localhost",
+    "usage": "Credentials: root:gns3",
+    "port_name_format": "eth{0}",
+    "qemu": {
+        "acpi_shutdown": true,
+        "adapter_type": "virtio-net-pci",
+        "adapters": 8,
+        "ram": 512,
+        "hda_disk_interface": "virtio",
+        "arch": "x86_64",
+        "console_type": "telnet",
+        "kvm": "require"
+    },
+    "images": [
+        {
+            "filename": "%FILENAME%",
+            "version": "%VERSION%",
+            "md5sum": "%CHECKSUM%",
+            "filesize": 0,
+            "download_url": "file:///%FILENAME%"
+        }
+    ],
+    "versions": [
+        {
+            "name": "%VERSION%",
+            "images": {
+                "hda_disk_image": "%FILENAME%"
+            }
+        }
+    ]
+}

@@ -1,0 +1,45 @@
+{
+    "description": "FRRouting Debian image based on standard install",
+    "variables": {
+        "image_name": "image.qcow2",
+        "root_password": "gns3",
+        "iso_url": "https://cdimage.debian.org/debian-cd/11.5.0/amd64/iso-cd/debian-11.5.0-amd64-netinst.iso",
+        "checksum_url": "https://cdimage.debian.org/debian-cd/11.5.0/amd64/iso-cd/SHA512SUMS"
+    },
+    "builders": [
+        {
+            "type": "qemu",
+            "accelerator": "kvm",
+            "disk_interface": "virtio-scsi",
+            "disk_size": "2048M",
+            "disk_compression": true,
+            "format": "qcow2",
+            "headless": true,
+            "net_device": "virtio-net-pci",
+            "vm_name": "{{user `image_name`}}",
+            "iso_url": "{{user `iso_url`}}",
+            "iso_checksum": "file:{{user `checksum_url`}}",
+            "http_directory": "http",
+            "communicator": "ssh",
+            "ssh_username": "root",
+            "ssh_password": "{{user `root_password`}}",
+            "boot_command": [
+                "<esc><wait>",
+                "auto url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg lowmem/low=true netcfg/get_hostname=frr netcfg/get_domain=local<enter><wait>"
+            ],
+            "shutdown_command": "shutdown -h now"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/provision.sh"
+        },
+        {
+            "type": "file",
+            "direction": "download",
+            "source": "/etc/frr-version",
+            "destination": "frr-version"
+        }
+    ]
+}
