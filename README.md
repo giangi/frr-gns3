@@ -1,6 +1,7 @@
 # FRRouting GNS3 Appliances
 
-This project contains experimental [FRRouting](https://frrouting.org/) appliances for [GNS3](https://www.gns3.com/)
+This project contains experimental [FRRouting](https://frrouting.org/)
+appliances for [GNS3](https://www.gns3.com/)
 
 ## Appliances
 
@@ -59,34 +60,12 @@ Since the project is experimental and all builds are local and ephemeral, it
 does not aim to leverage the download and versioning capability of GNS3
 appliances. The built GNS3 appliance template file does not incrementally
 receive new versions, but tracks only a single version which changes at each
-build.
-
-To import the appliance, a good idea is to move relevant artifacts to a location
-which GNS3 considers for discovery, e.g. the Downloads directory
-
-```sh
-cp *.gns3a frr-*.qcow2 ~/Downloads
-```
-
-then import the appliance template file.
+build. Nevertheless, importing the the appliance template file and disk should
+work without issue.
 
 On new builds, even though the appliance file contains a single version, It
 should be then possible to repeat the above process ending up with multiple
 versions of the appliance.
-
-### Warning: cleanly re-importing the appliance
-
-For a completely clean import, it is important to note that GNS3 seems to keep
-track of appliance and disk image files (e.g. in `~/GNS3`) even after an
-appliance gets uninstalled. As such, deleting and re-importing an appliance is
-not *completely* clean.
-
-For a full delete/import cycle, manual cleanup of all files seems necessary,
-e.g. with a careful use of
-
-```sh
-find ~/GNS3 -type f -iname 'frr-debian*' -print0 | xargs -0 rm -i
-```
 
 ## Usage
 
