@@ -40,10 +40,14 @@ appliance: $(IMAGE) $(GNS3A_TEMPLATE)
 		> '$(GNS3A)'
 	jq empty '$(GNS3A)'
 
-.PHONY: clean
-clean:
-	rm -f *.qcow2 *.gns3a frr-version
+.PHONY: clean-build
+clean-build:
 	rm -rf output-qemu
+	rm -f $(APPLIANCE_NAME)*.qcow2 $(APPLIANCE_NAME)*.gns3a frr-version
+
+.PHONY: clean
+clean: clean-build
+	rm -f *.qcow2 *.gns3a
 
 .PHONY: check
 check:

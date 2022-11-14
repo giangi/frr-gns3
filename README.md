@@ -39,6 +39,20 @@ Each appliance will build
   * `DEB_VERSION` is the version of the installed `frr` Debian package
   * `TIMESTAMP` is a build timestamp in the format `YYYYmmddHHMMSS`
 
+To ease rebuilding
+
+```sh
+make clean-build
+```
+
+only deletes built artifacts, while
+
+```sh
+make clean
+```
+
+cleans everything.
+
 ## Importing in GNS3
 
 Since the project is experimental and all builds are local and ephemeral, it
