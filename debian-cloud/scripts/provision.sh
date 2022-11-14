@@ -65,7 +65,7 @@ seq 0 7 | xargs -I{} printf 'net.mpls.conf.eth%d.input=1\n' {} | tee -a /etc/sys
 # - gnupg: key management
 # - mtr: arguably superior traceroutes
 apt-get -y update
-apt-get -y install ifupdown2 curl gnupg mtr-tiny
+apt-get -y install curl gnupg mtr-tiny
 
 # Setup FRR official Debian repository
 # See https://deb.frrouting.org/

@@ -61,12 +61,11 @@ EOF
 seq 0 7 | xargs -I{} printf 'net.mpls.conf.eth%d.input=1\n' {} | tee -a /etc/sysctl.d/99-mpls.conf 1>&2
 
 # Install some prerequisite packages:
-# - ifupdown2: for VRRP support
 # - curl: for downloading during provisioning
 # - gnupg: key management
 # - mtr: arguably superior traceroutes
 apt-get -y update
-apt-get -y install ifupdown2 curl gnupg mtr-tiny
+apt-get -y install curl gnupg mtr-tiny
 
 # Setup FRR official Debian repository
 # See https://deb.frrouting.org/
