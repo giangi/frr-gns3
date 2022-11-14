@@ -38,19 +38,8 @@ ff02::2 ip6-allrouters
 EOF
 
 # Replace the interfaces file. We want 8 interfaces.
-cat <<'EOF' | tee /etc/network/interfaces 1>&2
-auto lo
-iface lo inet loopback
-
-auto eth0
-auto eth1
-auto eth2
-auto eth3
-auto eth4
-auto eth5
-auto eth6
-auto eth7
-EOF
+printf 'auto lo\niface lo inet loopback\n' | tee /etc/network/interfaces 1>&2
+seq 0 7 | xargs -I {} printf '\nauto eth%d\niface eth%d inet manual\n' {} {} | tee -a /etc/network/interfaces 1>&2
 
 # Enable IP and IPv6 forwarding
 cat <<'EOF' | tee /etc/sysctl.d/99-ip-forwarding.conf 1>&2
@@ -66,20 +55,12 @@ mpls_iptunnel
 EOF
 
 cat <<'EOF' | tee /etc/sysctl.d/99-mpls.conf 1>&2
-net.mpls.conf.lo.input=1
-net.mpls.conf.eth0.input=1
-net.mpls.conf.eth1.input=1
-net.mpls.conf.eth2.input=1
-net.mpls.conf.eth3.input=1
-net.mpls.conf.eth4.input=1
-net.mpls.conf.eth5.input=1
-net.mpls.conf.eth6.input=1
-net.mpls.conf.eth7.input=1
 net.mpls.platform_labels=1048575
+net.mpls.conf.lo.input=1
 EOF
+seq 0 7 | xargs -I{} printf 'net.mpls.conf.eth%d.input=1\n' {} | tee -a /etc/sysctl.d/99-mpls.conf 1>&2
 
 # Install some prerequisite packages:
-# - ifupdown2: for VRRP support
 # - curl: for downloading during provisioning
 # - gnupg: key management
 # - mtr: arguably superior traceroutes
