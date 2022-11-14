@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Provision FRR Debian image
+# Provision FRR Debian Cloud image
 # Some inspiration was taken from
 # https://www.uni-koeln.de/~pbogusze/posts/Building_64bit_alpine_linux_GNS3_FRRouting_appliance.html
 
