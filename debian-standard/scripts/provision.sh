@@ -116,7 +116,7 @@ echo "${FRR_DEB_VERSION}" > /etc/frr-version
 # Replace the static MOTD
 cat <<EOF | tee /etc/motd
 
-FRR Debian Cloud GNS3 Appliance
+FRR Debian Standard GNS3 Appliance
 ${PRETTY_NAME}
 FRR Version: ${FRR_DEB_VERSION}
 
