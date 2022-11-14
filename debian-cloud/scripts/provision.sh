@@ -40,6 +40,23 @@ EOF
 # Replace the interfaces file. We want 8 interfaces.
 printf 'auto lo\niface lo inet loopback\n' | tee /etc/network/interfaces 1>&2
 seq 0 7 | xargs -I {} printf '\nauto eth%d\niface eth%d inet manual\n' {} {} | tee -a /etc/network/interfaces 1>&2
+# Add a sample of VRRP configuration since it is easy to forget and it is better
+# to copy/paste it.
+cat <<'EOF' | tee -a /etc/network/interfaces 1>&2
+
+# VRRP configuration example for VRID 45 => 0x2d
+#
+#auto eth0
+#iface eth0 inet manual
+#    up ip link add vrrp4-45 link eth0 addrgenmode random type macvlan mode bridge
+#    up ip link set dev vrrp4-45 address 00:00:5e:00:01:2d
+#    up ip addr add 10.0.2.16/24 dev vrrp4-45
+#    up ip link set dev vrrp4-45 up
+#    up ip link add vrrp6-45 link eth0 addrgenmode random type macvlan mode bridge
+#    up ip link set dev vrrp6-45 address 00:00:5e:00:02:2d
+#    up ip addr add 2001:db8::370:7334/64 dev vrrp6-45
+#    up ip link set dev vrrp6-45 up
+EOF
 
 # Enable IP and IPv6 forwarding
 cat <<'EOF' | tee /etc/sysctl.d/99-ip-forwarding.conf 1>&2
