@@ -3,7 +3,7 @@ APPLIANCE_NAME := frr-debian-standard
 PACKER_TEMPLATE := packer.json
 IMAGE := output-qemu/image.qcow2
 SCRIPTS := $(shell find scripts -type f -iname '*.sh')
-IMAGE_PREREQ := $(PACKER_TEMPLATE) $(SCRIPTS) $(BASE_IMAGE)
+IMAGE_PREREQ := $(PACKER_TEMPLATE) $(SCRIPTS)
 GNS3A_TEMPLATE := gns3a.json
 GNS3A := $(APPLIANCE_NAME).gns3a
 TIMESTAMP := $(shell TZ=Etc/UTC date '+%Y%m%d%H%M%S')
