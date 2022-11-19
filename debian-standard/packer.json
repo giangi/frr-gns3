@@ -2,7 +2,7 @@
     "description": "FRRouting Debian image based on standard install",
     "variables": {
         "image_name": "image.qcow2",
-        "root_password": "gns3",
+        "password": "gns3",
         "iso_url": "https://cdimage.debian.org/debian-cd/11.5.0/amd64/iso-cd/debian-11.5.0-amd64-netinst.iso",
         "checksum_url": "https://cdimage.debian.org/debian-cd/11.5.0/amd64/iso-cd/SHA512SUMS"
     },
@@ -21,19 +21,20 @@
             "iso_checksum": "file:{{user `checksum_url`}}",
             "http_directory": "http",
             "communicator": "ssh",
-            "ssh_username": "root",
-            "ssh_password": "{{user `root_password`}}",
+            "ssh_username": "debian",
+            "ssh_password": "{{user `password`}}",
             "boot_command": [
                 "<esc><wait>",
                 "auto url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg lowmem/low=true netcfg/get_hostname=frr netcfg/get_domain=local<enter><wait>"
             ],
-            "shutdown_command": "shutdown -h now"
+            "shutdown_command": "sudo shutdown -h now"
         }
     ],
     "provisioners": [
         {
             "type": "shell",
-            "script": "scripts/provision.sh"
+            "script": "scripts/provision.sh",
+            "execute_command": "sudo sh -c '{{ .Vars }} {{ .Path }}'"
         },
         {
             "type": "file",

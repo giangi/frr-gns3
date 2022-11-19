@@ -11,7 +11,7 @@
     "status": "experimental",
     "maintainer": "Gianluca Merlo",
     "maintainer_email": "root@localhost",
-    "usage": "Credentials: root:gns3",
+    "usage": "Credentials: debian:gns3\nUse sudo (passworldless) for administration",
     "port_name_format": "eth{0}",
     "qemu": {
         "acpi_shutdown": true,

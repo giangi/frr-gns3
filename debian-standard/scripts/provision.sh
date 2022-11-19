@@ -12,29 +12,36 @@ export DEBIAN_FRONTEND=noninteractive
 # - Setup serial console
 # - Use legacy network interface names (eth<N>)
 # - Noisy boot
-sed -i -e 's/^#\?\(GRUB_TERMINAL\)=.*/\1=console/' /etc/default/grub
-sed -i -e 's/^#\?\(GRUB_CMDLINE_LINUX\)=.*/\1="console=ttyS0,115200 console=tty0 net.ifnames=0 biosdevname=0"/' /etc/default/grub
-sed -i -e 's/^#\?\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1=""/' /etc/default/grub
+sed -i -E -e '/GRUB_(TERMINAL|SERIAL_COMMAND|CMDLINE_LINUX(_DEFAULT)?)=/d' /etc/default/grub
+cat <<'EOF' | tee -a /etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT=""
+GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0 net.ifnames=0 biosdevname=0"
+GRUB_TERMINAL="console serial"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+EOF
+update-grub
 
-update-grub2
-
-# Set the serial console for root autologin
+# Set the serial console for debian user autologin
 mkdir -p /etc/systemd/system/serial-getty@ttyS0.service.d
 cat <<'EOF' | tee /etc/systemd/system/serial-getty@ttyS0.service.d/autologin.conf
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\u' --keep-baud 115200,57600,38400,9600 --autologin root %I $TERM
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --keep-baud 115200,57600,38400,9600 --autologin debian %I $TERM
 EOF
 systemctl daemon-reload
 
 # Prepare /etc/hosts. We only need local hosts
 cat <<'EOF' | tee /etc/hosts 1>&2
-127.0.0.1	localhost
+127.0.1.1 frr.local frr
+127.0.0.1 localhost
 
 # The following lines are desirable for IPv6 capable hosts
-::1     localhost ip6-localhost ip6-loopback
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
 EOF
 
 # Replace the interfaces file. We want 8 interfaces.
@@ -80,9 +87,8 @@ seq 0 7 | xargs -I{} printf 'net.mpls.conf.eth%d.input=1\n' {} | tee -a /etc/sys
 # Install some prerequisite packages:
 # - curl: for downloading during provisioning
 # - gnupg: key management
-# - mtr: arguably superior traceroutes
 apt-get -y update
-apt-get -y install curl gnupg mtr-tiny
+apt-get -y install curl gnupg
 
 # Setup FRR official Debian repository
 # See https://deb.frrouting.org/
@@ -109,6 +115,10 @@ sed -i -E -e 's/^(bgp|ospf|ospf6|rip|ripng|isis|pim|ldp|nhrp|eigrp|babel|sharp|p
 FRR_DEB_VERSION="$(dpkg-query -W -f '${Version}' frr)"
 test -n "${FRR_DEB_VERSION}"
 echo "${FRR_DEB_VERSION}" > /etc/frr-version
+
+# Add debian user to frr's groups
+gpasswd -a debian frr
+gpasswd -a debian frrvty
 
 # Final cosmetic touches
 # Replace the static MOTD
