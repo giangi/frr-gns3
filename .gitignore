@@ -2,4 +2,6 @@ output-qemu
 *.gns3a
 *.qcow2
 *.convert
+*.img
+*.iso
 frr-version

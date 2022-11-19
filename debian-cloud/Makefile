@@ -1,6 +1,4 @@
 APPLIANCE_NAME := frr-debian-cloud
-CLOUD_IMAGE_URL := https://cloud.debian.org/images/cloud/bullseye/20221108-1193/debian-11-genericcloud-amd64-20221108-1193.qcow2
-CLOUD_IMAGE_SHA512SUMS_URL := https://cloud.debian.org/images/cloud/bullseye/20221108-1193/SHA512SUMS
 
 PACKER_TEMPLATE := packer.json
 IMAGE := output-qemu/image.qcow2
@@ -14,24 +12,9 @@ TIMESTAMP := $(shell TZ=Etc/UTC date '+%Y%m%d%H%M%S')
 all: appliance
 
 $(IMAGE): $(IMAGE_PREREQ)
-# Download the cloud image
-	wget -N '$(CLOUD_IMAGE_URL)'
-	wget -N -O SHA512SUMS '$(CLOUD_IMAGE_SHA512SUMS_URL)'
-	sha512sum -c --ignore-missing SHA512SUMS
-# Prepare a "base image" for packer to work on. We are not using cloud-init
-# because it seems hard in this context. We are instead relying on libguestfs
-# which despite being an additional requirement is easy to use. The base image
-# uses the cloud image as backing to save space and time.
-	qemu-img create -b '$(abspath $(shell basename '$(CLOUD_IMAGE_URL)'))' -F qcow2 -f qcow2 base.qcow2
-	virt-sysprep \
-		--password root:password:gns3 \
-		--hostname frr \
-		--firstboot-command 'DEBIAN_FRONTEND=noninteractive dpkg-reconfigure openssh-server' \
-		--firstboot-command 'sed -i -e "s/^#\?\(PermitRootLogin\).*/\1 yes/g" /etc/ssh/sshd_config' \
-		--firstboot-command 'sed -i -e "s/^#\?\(PasswordAuthentication\).*/\1 yes/g" /etc/ssh/sshd_config' \
-		--firstboot-command 'systemctl restart ssh.service' \
-		-a base.qcow2
-# Build using packer on the base image
+# Prepare cloud-init configuration
+	$(MAKE) -C cloud-init
+# Build using packer
 	packer build -force '$(PACKER_TEMPLATE)'
 # Test we have build artifacts
 	qemu-img info '$(IMAGE)'
@@ -61,11 +44,12 @@ appliance: $(IMAGE) $(GNS3A_TEMPLATE)
 .PHONY: clean-build
 clean-build:
 	rm -rf output-qemu
-	rm -f base.qcow2 $(APPLIANCE_NAME)*.qcow2 $(APPLIANCE_NAME)*.gns3a frr-version
+	rm -f $(APPLIANCE_NAME)*.qcow2 $(APPLIANCE_NAME)*.gns3a frr-version
+	$(MAKE) -C cloud-init clean
 
 .PHONY: clean
 clean: clean-build
-	rm -f *.qcow2 *.gns3a SHA512SUMS
+	rm -f *.qcow2 *.gns3a
 
 .PHONY: check
 check:

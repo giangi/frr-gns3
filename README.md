@@ -20,7 +20,8 @@ packages](https://deb.frrouting.org/) of FRR.
 * [Packer](https://www.packer.io/)
 * [jq](https://stedolan.github.io/jq/)
 * [QEMU](https://www.qemu.org/)
-* [libguestfs-tools](https://libguestfs.org/)
+* `genisoimage` (to build the `cloud-init` datasource for cloud-init based
+  images)
 
 ## Building
 

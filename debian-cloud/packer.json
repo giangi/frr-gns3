@@ -1,9 +1,10 @@
 {
     "description": "FRRouting image based on Debian cloud image",
     "variables": {
-        "base_image_name": "base.qcow2",
         "image_name": "image.qcow2",
-        "root_password": "gns3"
+        "password": "gns3",
+        "iso_url": "https://cloud.debian.org/images/cloud/bullseye/20221108-1193/debian-11-genericcloud-amd64-20221108-1193.qcow2",
+        "checksum_url": "https://cloud.debian.org/images/cloud/bullseye/20221108-1193/SHA512SUMS"
     },
     "builders": [
         {
@@ -17,18 +18,20 @@
             "net_device": "virtio-net-pci",
             "vm_name": "{{user `image_name`}}",
             "disk_image": true,
-            "iso_url": "{{user `base_image_name`}}",
-            "iso_checksum": "none",
+            "iso_url": "{{user `iso_url`}}",
+            "iso_checksum": "file:{{user `checksum_url`}}",
+            "qemuargs": [ [ "-cdrom", "cloud-init/seed.iso" ] ],
             "communicator": "ssh",
-            "ssh_username": "root",
-            "ssh_password": "{{user `root_password`}}",
-            "shutdown_command": "shutdown -h now"
+            "ssh_username": "debian",
+            "ssh_password": "{{user `password`}}",
+            "shutdown_command": "sudo shutdown -h now"
         }
     ],
     "provisioners": [
         {
             "type": "shell",
-            "script": "scripts/provision.sh"
+            "script": "scripts/provision.sh",
+            "execute_command" : "sudo sh -c '{{ .Vars }} {{ .Path }}'"
         },
         {
             "type": "file",

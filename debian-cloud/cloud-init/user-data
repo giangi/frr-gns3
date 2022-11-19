@@ -1,0 +1,8 @@
+#cloud-config
+hostname: frr
+fqdn: frr.local
+manage_etc_hosts: true
+ssh_pwauth: true
+password: gns3
+chpasswd:
+  expire: false
